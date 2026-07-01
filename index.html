@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>MineClass · Etiquetar</title>
+<style>
+  body{font-family:'Raleway',Arial,sans-serif;max-width:620px;margin:40px auto;color:#3B1164;}
+  h1{color:#3B1164;}
+  textarea{width:100%;height:90px;padding:10px;border:2px solid #ECE5F3;border-radius:10px;font-size:15px;}
+  button{background:#F05948;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:15px;}
+  button:hover{background:#D8412C;}
+  .chip{display:inline-block;background:#ECE5F3;color:#3B1164;padding:5px 12px;border-radius:999px;margin:3px;font-weight:600;}
+</style>
+</head>
+<body>
+  <h1>⛏️ Etiquetar perfil</h1>
+  <p>Escribe algo y Clarita (el Python) lo etiqueta:</p>
+  <textarea id="texto">operador de camión minero</textarea>
+  <br><br>
+  <button onclick="etiquetar()">Analizar con Clarita</button>
+  <div id="resultado" style="margin-top:22px;"></div>
+
+<script>
+// ⬇️ ESTA es la conexión: la dirección de tu API en Python.
+// En tu computador es esta. Cuando la subas a un servidor, cambias esta URL.
+const API = "http://127.0.0.1:8000/etiquetar";
+
+async function etiquetar() {
+  const texto = document.getElementById("texto").value;
+  // le mandamos el texto a Python...
+  const res = await fetch(API, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ texto: texto })
+  });
+  // ...y recibimos las etiquetas de vuelta
+  const data = await res.json();
+  const chips = data.etiquetas.map(e => `<span class="chip">${e}</span>`).join(" ");
+  document.getElementById("resultado").innerHTML = "<b>Etiquetas:</b> " + chips;
+}
+</script>
+</body>
+</html>
