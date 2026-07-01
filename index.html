@@ -10,6 +10,8 @@
   button{background:#F05948;color:#fff;border:none;padding:11px 18px;border-radius:10px;font-weight:bold;cursor:pointer;font-size:15px;}
   button:hover{background:#D8412C;}
   .chip{display:inline-block;background:#ECE5F3;color:#3B1164;padding:5px 12px;border-radius:999px;margin:3px;font-weight:600;}
+  .error{color:#D8412C;font-weight:600;}
+  .small{color:#888;font-size:12px;word-break:break-all;}
 </style>
 </head>
 <body>
@@ -19,24 +21,46 @@
   <br><br>
   <button onclick="etiquetar()">Analizar con Clarita</button>
   <div id="resultado" style="margin-top:22px;"></div>
+  <p class="small" id="apiurl"></p>
 
 <script>
-// ⬇️ ESTA es la conexión: la dirección de tu API en Python.
-// En tu computador es esta. Cuando la subas a un servidor, cambias esta URL.
-const API = "https://minelaburo2.onrender.com/etiquetar";
+// ⬇️ ESTA es la conexión: la dirección de tu API en Render (o local).
+const API = "http://127.0.0.1:8000/etiquetar";
+
+// muestra abajo qué dirección está usando (para que veas si es la correcta)
+document.getElementById("apiurl").textContent = "Conectando a: " + API;
 
 async function etiquetar() {
+  const salida = document.getElementById("resultado");
   const texto = document.getElementById("texto").value;
-  // le mandamos el texto a Python...
-  const res = await fetch(API, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ texto: texto })
-  });
-  // ...y recibimos las etiquetas de vuelta
-  const data = await res.json();
-  const chips = data.etiquetas.map(e => `<span class="chip">${e}</span>`).join(" ");
-  document.getElementById("resultado").innerHTML = "<b>Etiquetas:</b> " + chips;
+
+  // aviso de "cargando" (la 1ª vez Render tarda ~40s en despertar)
+  salida.innerHTML = "⏳ Analizando... (si es la primera vez, puede tardar ~40 segundos mientras la API despierta)";
+
+  try {
+    const res = await fetch(API, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ texto: texto })
+    });
+
+    if (!res.ok) {
+      salida.innerHTML = '<span class="error">❌ La API respondió con un error (código ' + res.status + ').</span>';
+      return;
+    }
+
+    const data = await res.json();
+    const chips = data.etiquetas.map(e => '<span class="chip">' + e + '</span>').join(" ");
+    salida.innerHTML = "<b>Etiquetas:</b> " + chips;
+
+  } catch (e) {
+    // si no se pudo ni conectar, lo decimos claramente
+    salida.innerHTML = '<span class="error">❌ No pude conectar con la API.</span><br>'
+      + '<span class="small">Detalle: ' + e.message + '<br>'
+      + 'Revisa que la dirección de arriba sea la de Render (https) + /etiquetar, '
+      + 'y que la API esté despierta (ábrela con /docs en el navegador).</span>';
+    console.error("Error de conexión:", e);
+  }
 }
 </script>
 </body>
